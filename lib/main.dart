@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'models/habit.dart';
 import 'screens/home_screen.dart';
 
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEF9F27)),
         scaffoldBackgroundColor: const Color(0xFFFFFBF2),
+        textTheme: GoogleFonts.notoSansKrTextTheme(),
         useMaterial3: true,
       ),
       home: const HomeScreen(),
