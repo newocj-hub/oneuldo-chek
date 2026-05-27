@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/habit.dart';
 import 'add_habit_screen.dart';
+import 'habit_detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -152,63 +153,74 @@ class _HabitCard extends StatelessWidget {
     final isDone = habit.isCompletedToday;
     final totalSaving = habit.totalSaving;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Text(habit.icon, style: const TextStyle(fontSize: 28)),
-        title: Text(
-          habit.name,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isDone ? Colors.grey : const Color(0xFF2C2C2A),
-            decoration: isDone ? TextDecoration.lineThrough : null,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => HabitDetailScreen(habit: habit)),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        color: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
           ),
-        ),
-        subtitle: Row(
-          children: [
-            const Text('🔥', style: TextStyle(fontSize: 12)),
-            const SizedBox(width: 2),
-            Text(
-              '${habit.currentStreak}일',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF633806)),
+          leading: Text(habit.icon, style: const TextStyle(fontSize: 28)),
+          title: Text(
+            habit.name,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isDone ? Colors.grey : const Color(0xFF2C2C2A),
+              decoration: isDone ? TextDecoration.lineThrough : null,
             ),
-            if (habit.savingAmount > 0) ...[
-              const SizedBox(width: 8),
+          ),
+          subtitle: Row(
+            children: [
+              const Text('🔥', style: TextStyle(fontSize: 12)),
+              const SizedBox(width: 2),
               Text(
-                '💰 ${_formatMoney(totalSaving)}원 절약',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFFEF9F27),
-                  fontWeight: FontWeight.bold,
-                ),
+                '${habit.currentStreak}일',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF633806)),
               ),
+              if (habit.savingAmount > 0) ...[
+                const SizedBox(width: 8),
+                Text(
+                  '💰 ${_formatMoney(totalSaving)}원 절약',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFFEF9F27),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ],
-          ],
-        ),
-        trailing: GestureDetector(
-          onTap: () {
-            if (isDone) {
-              habit.completedDates.remove(todayKey);
-            } else {
-              habit.completedDates.add(todayKey);
-            }
-            habit.save();
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isDone ? const Color(0xFFEF9F27) : Colors.transparent,
-              border: Border.all(color: const Color(0xFFEF9F27), width: 2),
+          ),
+          trailing: GestureDetector(
+            onTap: () {
+              if (isDone) {
+                habit.completedDates.remove(todayKey);
+              } else {
+                habit.completedDates.add(todayKey);
+              }
+              habit.save();
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDone ? const Color(0xFFEF9F27) : Colors.transparent,
+                border: Border.all(color: const Color(0xFFEF9F27), width: 2),
+              ),
+              child: isDone
+                  ? const Icon(Icons.check, size: 18, color: Colors.white)
+                  : null,
             ),
-            child: isDone
-                ? const Icon(Icons.check, size: 18, color: Colors.white)
-                : null,
           ),
         ),
       ),
