@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/habit.dart';
 import 'add_habit_screen.dart';
 import 'habit_detail_screen.dart';
+import 'stats_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -36,7 +37,12 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.bar_chart, color: Color(0xFF412402)),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const StatsScreen()),
+              );
+            },
           ),
         ],
       ),
