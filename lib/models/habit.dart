@@ -14,16 +14,22 @@ class Habit extends HiveObject {
   late String icon;
 
   @HiveField(3)
-  late List<int> repeatDays; // 0=월 1=화 2=수 3=목 4=금 5=토 6=일
+  late List<int> repeatDays;
 
   @HiveField(4)
-  late String? alarmTime; // "08:00" 형식
+  late String? alarmTime;
 
   @HiveField(5)
-  late List<String> completedDates; // "2025-05-20" 형식
+  late List<String> completedDates;
 
   @HiveField(6)
   late DateTime createdAt;
+
+  @HiveField(7)
+  late int savingAmount; // 절약 금액 (원)
+
+  @HiveField(8)
+  late int savingCycle; // 며칠마다 (기본 1일)
 
   Habit({
     required this.id,
@@ -33,6 +39,8 @@ class Habit extends HiveObject {
     this.alarmTime,
     List<String>? completedDates,
     DateTime? createdAt,
+    this.savingAmount = 0,
+    this.savingCycle = 1,
   }) : completedDates = completedDates ?? [],
        createdAt = createdAt ?? DateTime.now();
 
@@ -80,5 +88,18 @@ class Habit extends HiveObject {
       }
     }
     return longest;
+  }
+
+  // 총 절약액 계산 (N일마다 M원)
+  int get totalSaving {
+    if (savingAmount == 0 || savingCycle == 0) return 0;
+    return (completedDates.length ~/ savingCycle) * savingAmount;
+  }
+
+  // 오늘 절약액 (오늘 체크했을 때 N일 사이클 완성되면 표시)
+  int get todaySaving {
+    if (savingAmount == 0 || savingCycle == 0) return 0;
+    if (!isCompletedToday) return 0;
+    return completedDates.length % savingCycle == 0 ? savingAmount : 0;
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../models/habit.dart';
@@ -12,21 +13,24 @@ class AddHabitScreen extends StatefulWidget {
 
 class _AddHabitScreenState extends State<AddHabitScreen> {
   final _nameController = TextEditingController();
-  String _selectedIcon = '💧';
+  final _amountController = TextEditingController();
+  final _cycleController = TextEditingController(text: '1');
+  String _selectedIcon = '🚬';
   final List<bool> _selectedDays = List.filled(7, false);
   final List<String> _dayLabels = ['월', '화', '수', '목', '금', '토', '일'];
+  bool _useSaving = false;
+
   final List<String> _icons = [
-    '💧',
-    '📚',
-    '🏃',
-    '🧘',
-    '🌙',
-    '✏️',
-    '💪',
-    '🍎',
-    '😴',
-    '🎵',
-    '🧹',
+    '🚬',
+    '☕',
+    '🍺',
+    '🛍️',
+    '🚗',
+    '🍔',
+    '🎮',
+    '📱',
+    '🍕',
+    '🧋',
     '💊',
     '🚶',
     '🎯',
@@ -36,6 +40,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     '🍵',
     '📝',
     '🎸',
+    '💧',
   ];
 
   void _save() {
@@ -49,18 +54,29 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     for (int i = 0; i < 7; i++) {
       if (_selectedDays[i]) days.add(i);
     }
-    print('저장되는 요일: $days');
     if (days.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('반복 요일을 하나 이상 선택해주세요!')));
       return;
     }
+
+    int savingAmount = 0;
+    int savingCycle = 1;
+    if (_useSaving) {
+      savingAmount =
+          int.tryParse(_amountController.text.replaceAll(',', '')) ?? 0;
+      savingCycle = int.tryParse(_cycleController.text) ?? 1;
+      if (savingCycle < 1) savingCycle = 1;
+    }
+
     final habit = Habit(
       id: const Uuid().v4(),
       name: _nameController.text.trim(),
       icon: _selectedIcon,
       repeatDays: days,
+      savingAmount: savingAmount,
+      savingCycle: savingCycle,
     );
     Hive.box<Habit>('habits').add(habit);
     Navigator.pop(context);
@@ -73,7 +89,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFEF9F27),
         title: const Text(
-          '습관 추가',
+          '절약 습관 추가',
           style: TextStyle(
             color: Color(0xFF412402),
             fontWeight: FontWeight.bold,
@@ -91,7 +107,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             TextField(
               controller: _nameController,
               decoration: InputDecoration(
-                hintText: '예: 물 마시기',
+                hintText: '예: 담배 끊기',
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -176,6 +192,99 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 );
               }),
             ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '절약 금액 설정',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Switch(
+                  value: _useSaving,
+                  activeColor: const Color(0xFFEF9F27),
+                  onChanged: (val) => setState(() => _useSaving = val),
+                ),
+              ],
+            ),
+            if (_useSaving) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAEEDA),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 60,
+                          child: TextField(
+                            controller: _cycleController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            '일마다',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF633806),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            controller: _amountController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            decoration: InputDecoration(
+                              hintText: '절약 금액',
+                              suffixText: '원',
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                                horizontal: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '예: 3일마다 4,500원 → 담배 한 갑',
+                      style: TextStyle(fontSize: 12, color: Colors.brown[400]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,

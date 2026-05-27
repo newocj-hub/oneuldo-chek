@@ -6,6 +6,13 @@ import 'add_habit_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  String _formatMoney(int amount) {
+    return amount.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final box = Hive.box<Habit>('habits');
@@ -13,7 +20,6 @@ class HomeScreen extends StatelessWidget {
     final todayKey =
         '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     final weekday = today.weekday - 1;
-    print('오늘 weekday: ${today.weekday}, 변환후: $weekday');
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFBF2),
@@ -40,6 +46,10 @@ class HomeScreen extends StatelessWidget {
               .where((h) => h.repeatDays.contains(weekday))
               .toList();
           final completed = habits.where((h) => h.isCompletedToday).length;
+          final totalSaving = box.values.fold<int>(
+            0,
+            (sum, h) => sum + h.totalSaving,
+          );
 
           return Column(
             children: [
@@ -48,19 +58,43 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 color: const Color(0xFFFAEEDA),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('🔥', style: TextStyle(fontSize: 24)),
-                    const SizedBox(width: 8),
-                    Text(
-                      habits.isEmpty
-                          ? '습관을 추가해보세요!'
-                          : '$completed / ${habits.length} 완료',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF633806),
-                      ),
+                    Row(
+                      children: [
+                        const Text('🔥', style: TextStyle(fontSize: 24)),
+                        const SizedBox(width: 8),
+                        Text(
+                          habits.isEmpty
+                              ? '습관을 추가해보세요!'
+                              : '$completed / ${habits.length} 완료',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF633806),
+                          ),
+                        ),
+                      ],
                     ),
+                    if (totalSaving > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF9F27),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '💰 ${_formatMoney(totalSaving)}원 절약',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF412402),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -106,9 +140,17 @@ class _HabitCard extends StatelessWidget {
 
   const _HabitCard({required this.habit, required this.todayKey});
 
+  String _formatMoney(int amount) {
+    return amount.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDone = habit.isCompletedToday;
+    final totalSaving = habit.totalSaving;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -133,6 +175,17 @@ class _HabitCard extends StatelessWidget {
               '${habit.currentStreak}일',
               style: const TextStyle(fontSize: 12, color: Color(0xFF633806)),
             ),
+            if (habit.savingAmount > 0) ...[
+              const SizedBox(width: 8),
+              Text(
+                '💰 ${_formatMoney(totalSaving)}원 절약',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFFEF9F27),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ],
         ),
         trailing: GestureDetector(
