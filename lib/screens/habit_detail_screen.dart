@@ -19,6 +19,21 @@ class HabitDetailScreen extends StatelessWidget {
     final daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
     final firstWeekday = DateTime(now.year, now.month, 1).weekday % 7;
 
+    int perfectDays = 0;
+    int monthlyTarget = 0;
+
+    for (int d = 1; d <= daysInMonth; d++) {
+      final weekday = DateTime(now.year, now.month, d).weekday - 1;
+      if (habit.repeatDays.contains(weekday)) {
+        monthlyTarget++;
+        final dateKey =
+            '${now.year}-${now.month.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}';
+        if (habit.completedDates.contains(dateKey)) {
+          perfectDays++;
+        }
+      }
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFFBF2),
       appBar: AppBar(
@@ -37,7 +52,6 @@ class HabitDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 절약액 메인 카드
             if (habit.savingAmount > 0)
               Container(
                 width: double.infinity,
@@ -72,8 +86,6 @@ class HabitDetailScreen extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 16),
-
-            // 스트릭 통계
             Row(
               children: [
                 _StatCard(label: '현재 스트릭 🔥', value: '${habit.currentStreak}일'),
@@ -87,9 +99,33 @@ class HabitDetailScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-
-            // 달력
-            const Text('이번달 기록', style: TextStyle(fontWeight: FontWeight.bold)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '이번달 기록',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF9F27),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '✅ $perfectDays / $monthlyTarget',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF412402),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(12),
@@ -99,7 +135,6 @@ class HabitDetailScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // 요일 헤더
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: ['일', '월', '화', '수', '목', '금', '토']
@@ -120,7 +155,6 @@ class HabitDetailScreen extends StatelessWidget {
                         .toList(),
                   ),
                   const SizedBox(height: 8),
-                  // 날짜 그리드
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -138,6 +172,9 @@ class HabitDetailScreen extends StatelessWidget {
                           '${now.year}-${now.month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
                       final isDone = habit.completedDates.contains(dateKey);
                       final isToday = day == now.day;
+                      final weekday =
+                          DateTime(now.year, now.month, day).weekday - 1;
+                      final isTarget = habit.repeatDays.contains(weekday);
 
                       return Container(
                         decoration: BoxDecoration(
@@ -158,11 +195,13 @@ class HabitDetailScreen extends StatelessWidget {
                           child: Text(
                             '$day',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: isDone
                                   ? const Color(0xFF412402)
-                                  : const Color(0xFF2C2C2A),
+                                  : isTarget
+                                  ? const Color(0xFF2C2C2A)
+                                  : Colors.grey[400],
                             ),
                           ),
                         ),
@@ -173,8 +212,6 @@ class HabitDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-
-            // 달력 범례
             Row(
               children: [
                 Container(
@@ -205,6 +242,20 @@ class HabitDetailScreen extends StatelessWidget {
                 const SizedBox(width: 4),
                 const Text(
                   '오늘',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF633806)),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey[200],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Text(
+                  '목표 아님',
                   style: TextStyle(fontSize: 12, color: Color(0xFF633806)),
                 ),
               ],
