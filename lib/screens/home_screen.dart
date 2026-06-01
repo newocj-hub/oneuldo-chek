@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/habit.dart';
 import 'add_habit_screen.dart';
+import 'edit_habit_screen.dart';
 import 'habit_detail_screen.dart';
 import 'stats_screen.dart';
 
@@ -154,6 +155,85 @@ class _HabitCard extends StatelessWidget {
     );
   }
 
+  void _showMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFFFFFBF2),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '${habit.icon} ${habit.name}',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2C2C2A),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.edit, color: Color(0xFFEF9F27)),
+              title: const Text('수정하기'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditHabitScreen(habit: habit),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('삭제하기', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('습관 삭제'),
+                    content: Text('${habit.name} 습관을 삭제할까요?\n기록도 모두 사라져요.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('취소'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          habit.delete();
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          '삭제',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDone = habit.isCompletedToday;
@@ -166,6 +246,7 @@ class _HabitCard extends StatelessWidget {
           MaterialPageRoute(builder: (_) => HabitDetailScreen(habit: habit)),
         );
       },
+      onLongPress: () => _showMenu(context),
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
         color: Colors.white,
