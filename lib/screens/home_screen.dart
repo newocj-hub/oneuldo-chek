@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
 import '../models/habit.dart';
+import '../utils/theme_provider.dart';
 import 'add_habit_screen.dart';
 import 'edit_habit_screen.dart';
 import 'habit_detail_screen.dart';
 import 'stats_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -16,8 +19,15 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  String _formatDate(DateTime date) {
+    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+    final weekday = weekdays[date.weekday - 1];
+    return '${date.month}/${date.day} ($weekday)';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeProvider>().currentTheme;
     final box = Hive.box<Habit>('habits');
     final today = DateTime.now();
     final todayKey =
@@ -25,23 +35,42 @@ class HomeScreen extends StatelessWidget {
     final weekday = today.weekday - 1;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBF2),
+      backgroundColor: theme.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFEF9F27),
-        title: const Text(
+        backgroundColor: theme.primary,
+        title: Text(
           '오늘도첵',
-          style: TextStyle(
-            color: Color(0xFF412402),
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: theme.textDark, fontWeight: FontWeight.bold),
         ),
         actions: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                _formatDate(today),
+                style: TextStyle(
+                  color: theme.textDark,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
           IconButton(
-            icon: const Icon(Icons.bar_chart, color: Color(0xFF412402)),
+            icon: Icon(Icons.bar_chart, color: theme.textDark),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const StatsScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.settings, color: theme.textDark),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
               );
             },
           ),
@@ -64,7 +93,7 @@ class HomeScreen extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
-                color: const Color(0xFFFAEEDA),
+                color: theme.light,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -76,10 +105,10 @@ class HomeScreen extends StatelessWidget {
                           habits.isEmpty
                               ? '습관을 추가해보세요!'
                               : '$completed / ${habits.length} 완료',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF633806),
+                            color: theme.textLight,
                           ),
                         ),
                       ],
@@ -91,15 +120,15 @@ class HomeScreen extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEF9F27),
+                          color: theme.primary,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           '💰 ${_formatMoney(totalSaving)}원 절약',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF412402),
+                            color: theme.textDark,
                           ),
                         ),
                       ),
@@ -108,11 +137,11 @@ class HomeScreen extends StatelessWidget {
               ),
               Expanded(
                 child: habits.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           '오늘의 습관이 없어요\n아래 + 버튼으로 추가해보세요!',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: theme.textLight),
                         ),
                       )
                     : ListView.builder(
@@ -120,7 +149,11 @@ class HomeScreen extends StatelessWidget {
                         itemCount: habits.length,
                         itemBuilder: (context, index) {
                           final habit = habits[index];
-                          return _HabitCard(habit: habit, todayKey: todayKey);
+                          return _HabitCard(
+                            habit: habit,
+                            todayKey: todayKey,
+                            theme: theme,
+                          );
                         },
                       ),
               ),
@@ -129,14 +162,14 @@ class HomeScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFFEF9F27),
+        backgroundColor: theme.primary,
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const AddHabitScreen()),
           );
         },
-        child: const Icon(Icons.add, color: Color(0xFF412402)),
+        child: Icon(Icons.add, color: theme.textDark),
       ),
     );
   }
@@ -145,8 +178,13 @@ class HomeScreen extends StatelessWidget {
 class _HabitCard extends StatelessWidget {
   final Habit habit;
   final String todayKey;
+  final dynamic theme;
 
-  const _HabitCard({required this.habit, required this.todayKey});
+  const _HabitCard({
+    required this.habit,
+    required this.todayKey,
+    required this.theme,
+  });
 
   String _formatMoney(int amount) {
     return amount.toString().replaceAllMapped(
@@ -158,7 +196,7 @@ class _HabitCard extends StatelessWidget {
   void _showMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFFFFFBF2),
+      backgroundColor: theme.background,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -186,7 +224,7 @@ class _HabitCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ListTile(
-              leading: const Icon(Icons.edit, color: Color(0xFFEF9F27)),
+              leading: Icon(Icons.edit, color: theme.primary),
               title: const Text('수정하기'),
               onTap: () {
                 Navigator.pop(context);
@@ -271,15 +309,15 @@ class _HabitCard extends StatelessWidget {
               const SizedBox(width: 2),
               Text(
                 '${habit.currentStreak}일',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF633806)),
+                style: TextStyle(fontSize: 12, color: theme.textLight),
               ),
               if (habit.savingAmount > 0) ...[
                 const SizedBox(width: 8),
                 Text(
                   '💰 ${_formatMoney(totalSaving)}원 절약',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFFEF9F27),
+                    color: theme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -301,8 +339,8 @@ class _HabitCard extends StatelessWidget {
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isDone ? const Color(0xFFEF9F27) : Colors.transparent,
-                border: Border.all(color: const Color(0xFFEF9F27), width: 2),
+                color: isDone ? theme.primary : Colors.transparent,
+                border: Border.all(color: theme.primary, width: 2),
               ),
               child: isDone
                   ? const Icon(Icons.check, size: 18, color: Colors.white)

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/habit.dart';
 import '../utils/notification_service.dart';
+import '../utils/theme_provider.dart';
 
 class AddHabitScreen extends StatefulWidget {
   const AddHabitScreen({super.key});
@@ -134,22 +136,22 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     if (mounted) Navigator.pop(context);
   }
 
-  Widget _quickSelectButton(String label, VoidCallback onTap) {
+  Widget _quickSelectButton(String label, VoidCallback onTap, dynamic theme) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: const Color(0xFFFAEEDA),
+          color: theme.light,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFEF9F27), width: 1),
+          border: Border.all(color: theme.primary, width: 1),
         ),
         child: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF633806),
+            color: theme.textLight,
           ),
         ),
       ),
@@ -158,25 +160,30 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeProvider>().currentTheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBF2),
+      backgroundColor: theme.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFEF9F27),
-        title: const Text(
+        backgroundColor: theme.primary,
+        title: Text(
           '절약 습관 추가',
-          style: TextStyle(
-            color: Color(0xFF412402),
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: theme.textDark, fontWeight: FontWeight.bold),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFF412402)),
+        iconTheme: IconThemeData(color: theme.textDark),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('습관 이름', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              '습관 이름',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: theme.textDark,
+              ),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: _nameController,
@@ -191,7 +198,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text('아이콘 선택', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              '아이콘 선택',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: theme.textDark,
+              ),
+            ),
             const SizedBox(height: 8),
             GridView.builder(
               shrinkWrap: true,
@@ -209,14 +222,10 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   onTap: () => setState(() => _selectedIcon = icon),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xFFFAEEDA)
-                          : Colors.white,
+                      color: isSelected ? theme.light : Colors.white,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isSelected
-                            ? const Color(0xFFEF9F27)
-                            : Colors.transparent,
+                        color: isSelected ? theme.primary : Colors.transparent,
                         width: 2,
                       ),
                     ),
@@ -228,15 +237,21 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               },
             ),
             const SizedBox(height: 20),
-            const Text('반복 요일', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              '반복 요일',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: theme.textDark,
+              ),
+            ),
             const SizedBox(height: 8),
             Row(
               children: [
-                _quickSelectButton('매일', _selectAll),
+                _quickSelectButton('매일', _selectAll, theme),
                 const SizedBox(width: 8),
-                _quickSelectButton('평일', _selectWeekdays),
+                _quickSelectButton('평일', _selectWeekdays, theme),
                 const SizedBox(width: 8),
-                _quickSelectButton('주말', _selectWeekends),
+                _quickSelectButton('주말', _selectWeekends, theme),
               ],
             ),
             const SizedBox(height: 10),
@@ -253,22 +268,15 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isSelected
-                          ? const Color(0xFFEF9F27)
-                          : Colors.white,
-                      border: Border.all(
-                        color: const Color(0xFFEF9F27),
-                        width: 1.5,
-                      ),
+                      color: isSelected ? theme.primary : Colors.white,
+                      border: Border.all(color: theme.primary, width: 1.5),
                     ),
                     child: Center(
                       child: Text(
                         _dayLabels[index],
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: isSelected
-                              ? const Color(0xFF412402)
-                              : const Color(0xFFEF9F27),
+                          color: isSelected ? theme.textDark : theme.primary,
                         ),
                       ),
                     ),
@@ -280,13 +288,16 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   '알림 설정',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.textDark,
+                  ),
                 ),
                 Switch(
                   value: _useAlarm,
-                  activeColor: const Color(0xFFEF9F27),
+                  activeColor: theme.primary,
                   onChanged: (val) => setState(() => _useAlarm = val),
                 ),
               ],
@@ -299,25 +310,25 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAEEDA),
+                    color: theme.light,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         '알림 시간',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF633806),
+                          color: theme.textLight,
                         ),
                       ),
                       Text(
                         '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFEF9F27),
+                          color: theme.primary,
                         ),
                       ),
                     ],
@@ -329,13 +340,16 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   '절약 금액 설정',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.textDark,
+                  ),
                 ),
                 Switch(
                   value: _useSaving,
-                  activeColor: const Color(0xFFEF9F27),
+                  activeColor: theme.primary,
                   onChanged: (val) => setState(() => _useSaving = val),
                 ),
               ],
@@ -345,7 +359,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFAEEDA),
+                  color: theme.light,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -374,13 +388,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                             ),
                           ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Text(
                             '일마다',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF633806),
+                              color: theme.textLight,
                             ),
                           ),
                         ),
@@ -412,7 +426,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     const SizedBox(height: 8),
                     Text(
                       '예: 3일마다 4,500원 → 담배 한 갑',
-                      style: TextStyle(fontSize: 12, color: Colors.brown[400]),
+                      style: TextStyle(fontSize: 12, color: theme.textLight),
                     ),
                   ],
                 ),
@@ -424,8 +438,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               child: ElevatedButton(
                 onPressed: _save,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEF9F27),
-                  foregroundColor: const Color(0xFF412402),
+                  backgroundColor: theme.primary,
+                  foregroundColor: theme.textDark,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

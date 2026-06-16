@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
 import '../models/habit.dart';
+import '../utils/theme_provider.dart';
 
 class StatsScreen extends StatelessWidget {
   const StatsScreen({super.key});
@@ -23,20 +25,19 @@ class StatsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeProvider>().currentTheme;
     final box = Hive.box<Habit>('habits');
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBF2),
+      backgroundColor: theme.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFEF9F27),
+        backgroundColor: theme.primary,
         title: const Text(
           '전체 통계',
-          style: TextStyle(
-            color: Color(0xFF412402),
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFF412402)),
+        foregroundColor: theme.textDark,
+        iconTheme: IconThemeData(color: theme.textDark),
       ),
       body: ValueListenableBuilder(
         valueListenable: box.listenable(),
@@ -56,7 +57,6 @@ class StatsScreen extends StatelessWidget {
                     .map((h) => h.longestStreak)
                     .reduce((a, b) => a > b ? a : b);
 
-          // 절약액 순위 정렬
           final sortedHabits = [...habits]
             ..sort((a, b) => b.totalSaving.compareTo(a.totalSaving));
 
@@ -65,30 +65,26 @@ class StatsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 총 절약액 메인 카드
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAEEDA),
+                    color: theme.light,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     children: [
-                      const Text(
+                      Text(
                         '총 절약액',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF633806),
-                        ),
+                        style: TextStyle(fontSize: 14, color: theme.textLight),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         '${_formatMoney(totalSaving)}원',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFEF9F27),
+                          color: theme.primary,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -98,14 +94,14 @@ class StatsScreen extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEF9F27),
+                          color: theme.primary,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           _getFunMessage(totalSaving),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF412402),
+                            color: theme.textDark,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -114,30 +110,41 @@ class StatsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // 요약 통계
                 Row(
                   children: [
-                    _StatCard(label: '절약 습관', value: '${habits.length}개'),
+                    _StatCard(
+                      label: '절약 습관',
+                      value: '${habits.length}개',
+                      theme: theme,
+                    ),
                     const SizedBox(width: 8),
-                    _StatCard(label: '총 달성일', value: '${totalDays}일'),
+                    _StatCard(
+                      label: '총 달성일',
+                      value: '${totalDays}일',
+                      theme: theme,
+                    ),
                     const SizedBox(width: 8),
-                    _StatCard(label: '최장 스트릭', value: '${longestStreak}일'),
+                    _StatCard(
+                      label: '최장 스트릭',
+                      value: '${longestStreak}일',
+                      theme: theme,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 20),
-
-                // 습관별 절약액 순위
-                const Text(
+                Text(
                   '습관별 절약액 순위',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.textDark,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 if (habits.isEmpty)
-                  const Center(
+                  Center(
                     child: Text(
                       '아직 습관이 없어요!',
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: theme.textLight),
                     ),
                   )
                 else
@@ -164,7 +171,7 @@ class StatsScreen extends StatelessWidget {
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: index == 0
-                                  ? const Color(0xFFEF9F27)
+                                  ? theme.primary
                                   : const Color(0xFF888780),
                             ),
                           ),
@@ -190,11 +197,10 @@ class StatsScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(4),
                                   child: LinearProgressIndicator(
                                     value: ratio,
-                                    backgroundColor: const Color(0xFFFAEEDA),
-                                    valueColor:
-                                        const AlwaysStoppedAnimation<Color>(
-                                          Color(0xFFEF9F27),
-                                        ),
+                                    backgroundColor: theme.light,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      theme.primary,
+                                    ),
                                     minHeight: 8,
                                   ),
                                 ),
@@ -204,10 +210,10 @@ class StatsScreen extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             '${_formatMoney(habit.totalSaving)}원',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF633806),
+                              color: theme.textLight,
                             ),
                           ),
                         ],
@@ -226,8 +232,13 @@ class StatsScreen extends StatelessWidget {
 class _StatCard extends StatelessWidget {
   final String label;
   final String value;
+  final dynamic theme;
 
-  const _StatCard({required this.label, required this.value});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -242,17 +253,14 @@ class _StatCard extends StatelessWidget {
           children: [
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFEF9F27),
+                color: theme.primary,
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF633806)),
-            ),
+            Text(label, style: TextStyle(fontSize: 11, color: theme.textLight)),
           ],
         ),
       ),

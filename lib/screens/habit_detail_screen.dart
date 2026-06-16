@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/habit.dart';
+import '../utils/theme_provider.dart';
 
 class HabitDetailScreen extends StatelessWidget {
   final Habit habit;
@@ -15,6 +17,7 @@ class HabitDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeProvider>().currentTheme;
     final now = DateTime.now();
     final daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
     final firstWeekday = DateTime(now.year, now.month, 1).weekday % 7;
@@ -35,17 +38,14 @@ class HabitDetailScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBF2),
+      backgroundColor: theme.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFEF9F27),
+        backgroundColor: theme.primary,
         title: Text(
           '${habit.icon} ${habit.name}',
-          style: const TextStyle(
-            color: Color(0xFF412402),
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: theme.textDark, fontWeight: FontWeight.bold),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFF412402)),
+        iconTheme: IconThemeData(color: theme.textDark),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -57,30 +57,27 @@ class HabitDetailScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFAEEDA),
+                  color: theme.light,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       '총 절약액',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF633806)),
+                      style: TextStyle(fontSize: 12, color: theme.textLight),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${_formatMoney(habit.totalSaving)}원',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFFEF9F27),
+                        color: theme.primary,
                       ),
                     ),
                     Text(
                       '${habit.completedDates.length}일 달성 × ${habit.savingCycle}일마다 ${_formatMoney(habit.savingAmount)}원',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF633806),
-                      ),
+                      style: TextStyle(fontSize: 12, color: theme.textLight),
                     ),
                   ],
                 ),
@@ -88,13 +85,22 @@ class HabitDetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                _StatCard(label: '현재 스트릭 🔥', value: '${habit.currentStreak}일'),
+                _StatCard(
+                  label: '현재 스트릭 🔥',
+                  value: '${habit.currentStreak}일',
+                  theme: theme,
+                ),
                 const SizedBox(width: 8),
-                _StatCard(label: '최장 스트릭', value: '${habit.longestStreak}일'),
+                _StatCard(
+                  label: '최장 스트릭',
+                  value: '${habit.longestStreak}일',
+                  theme: theme,
+                ),
                 const SizedBox(width: 8),
                 _StatCard(
                   label: '총 달성',
                   value: '${habit.completedDates.length}일',
+                  theme: theme,
                 ),
               ],
             ),
@@ -102,9 +108,12 @@ class HabitDetailScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   '이번달 기록',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.textDark,
+                  ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -112,15 +121,15 @@ class HabitDetailScreen extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEF9F27),
+                    color: theme.primary,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     '✅ $perfectDays / $monthlyTarget',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF412402),
+                      color: theme.textDark,
                     ),
                   ),
                 ),
@@ -144,9 +153,9 @@ class HabitDetailScreen extends StatelessWidget {
                             child: Text(
                               d,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF633806),
+                                color: theme.textLight,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -180,15 +189,12 @@ class HabitDetailScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: isDone
-                              ? const Color(0xFFEF9F27)
+                              ? theme.primary
                               : isToday
-                              ? const Color(0xFFFAEEDA)
+                              ? theme.light
                               : Colors.transparent,
                           border: isToday && !isDone
-                              ? Border.all(
-                                  color: const Color(0xFFEF9F27),
-                                  width: 1.5,
-                                )
+                              ? Border.all(color: theme.primary, width: 1.5)
                               : null,
                         ),
                         child: Center(
@@ -198,7 +204,7 @@ class HabitDetailScreen extends StatelessWidget {
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: isDone
-                                  ? const Color(0xFF412402)
+                                  ? theme.textDark
                                   : isTarget
                                   ? const Color(0xFF2C2C2A)
                                   : Colors.grey[400],
@@ -217,15 +223,15 @@ class HabitDetailScreen extends StatelessWidget {
                 Container(
                   width: 12,
                   height: 12,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0xFFEF9F27),
+                    color: theme.primary,
                   ),
                 ),
                 const SizedBox(width: 4),
-                const Text(
+                Text(
                   '완료',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF633806)),
+                  style: TextStyle(fontSize: 12, color: theme.textLight),
                 ),
                 const SizedBox(width: 12),
                 Container(
@@ -233,16 +239,13 @@ class HabitDetailScreen extends StatelessWidget {
                   height: 12,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFEF9F27),
-                      width: 1.5,
-                    ),
+                    border: Border.all(color: theme.primary, width: 1.5),
                   ),
                 ),
                 const SizedBox(width: 4),
-                const Text(
+                Text(
                   '오늘',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF633806)),
+                  style: TextStyle(fontSize: 12, color: theme.textLight),
                 ),
                 const SizedBox(width: 12),
                 Container(
@@ -254,9 +257,9 @@ class HabitDetailScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                const Text(
+                Text(
                   '목표 아님',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF633806)),
+                  style: TextStyle(fontSize: 12, color: theme.textLight),
                 ),
               ],
             ),
@@ -270,8 +273,13 @@ class HabitDetailScreen extends StatelessWidget {
 class _StatCard extends StatelessWidget {
   final String label;
   final String value;
+  final dynamic theme;
 
-  const _StatCard({required this.label, required this.value});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -286,17 +294,14 @@ class _StatCard extends StatelessWidget {
           children: [
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFEF9F27),
+                color: theme.primary,
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF633806)),
-            ),
+            Text(label, style: TextStyle(fontSize: 11, color: theme.textLight)),
           ],
         ),
       ),
