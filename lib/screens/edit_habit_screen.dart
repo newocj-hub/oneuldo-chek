@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/habit.dart';
+import '../utils/notification_service.dart';
 
 class EditHabitScreen extends StatefulWidget {
   final Habit habit;
@@ -18,6 +19,8 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
   late String _selectedIcon;
   late List<bool> _selectedDays;
   late bool _useSaving;
+  late bool _useAlarm;
+  late TimeOfDay _alarmTime;
 
   final List<String> _dayLabels = ['월', '화', '수', '목', '금', '토', '일'];
   final List<String> _icons = [
@@ -53,12 +56,23 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
       (i) => widget.habit.repeatDays.contains(i),
     );
     _useSaving = widget.habit.savingAmount > 0;
+    _useAlarm = widget.habit.alarmTime != null;
     _amountController = TextEditingController(
       text: widget.habit.savingAmount > 0 ? '${widget.habit.savingAmount}' : '',
     );
     _cycleController = TextEditingController(
       text: '${widget.habit.savingCycle}',
     );
+
+    if (widget.habit.alarmTime != null) {
+      final parts = widget.habit.alarmTime!.split(':');
+      _alarmTime = TimeOfDay(
+        hour: int.parse(parts[0]),
+        minute: int.parse(parts[1]),
+      );
+    } else {
+      _alarmTime = const TimeOfDay(hour: 9, minute: 0);
+    }
   }
 
   @override
@@ -87,7 +101,17 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
     });
   }
 
-  void _save() {
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _alarmTime,
+    );
+    if (picked != null) {
+      setState(() => _alarmTime = picked);
+    }
+  }
+
+  Future<void> _save() async {
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -118,8 +142,24 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
       widget.habit.savingCycle = 1;
     }
 
+    if (_useAlarm) {
+      widget.habit.alarmTime =
+          '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}';
+      await NotificationService().scheduleHabitNotification(
+        id: widget.habit.key as int,
+        habitName: widget.habit.name,
+        icon: widget.habit.icon,
+        hour: _alarmTime.hour,
+        minute: _alarmTime.minute,
+        repeatDays: days,
+      );
+    } else {
+      widget.habit.alarmTime = null;
+      await NotificationService().cancelNotification(widget.habit.key as int);
+    }
+
     widget.habit.save();
-    Navigator.pop(context);
+    if (mounted) Navigator.pop(context);
   }
 
   Widget _quickSelectButton(String label, VoidCallback onTap) {
@@ -264,6 +304,55 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                 );
               }),
             ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '알림 설정',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Switch(
+                  value: _useAlarm,
+                  activeColor: const Color(0xFFEF9F27),
+                  onChanged: (val) => setState(() => _useAlarm = val),
+                ),
+              ],
+            ),
+            if (_useAlarm) ...[
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _pickTime,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAEEDA),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '알림 시간',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF633806),
+                        ),
+                      ),
+                      Text(
+                        '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFEF9F27),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

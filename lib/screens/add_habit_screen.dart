@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../models/habit.dart';
+import '../utils/notification_service.dart';
 
 class AddHabitScreen extends StatefulWidget {
   const AddHabitScreen({super.key});
@@ -19,6 +20,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   final List<bool> _selectedDays = List.filled(7, false);
   final List<String> _dayLabels = ['월', '화', '수', '목', '금', '토', '일'];
   bool _useSaving = false;
+  bool _useAlarm = false;
+  TimeOfDay _alarmTime = const TimeOfDay(hour: 9, minute: 0);
 
   final List<String> _icons = [
     '🚬',
@@ -61,7 +64,17 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     });
   }
 
-  void _save() {
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _alarmTime,
+    );
+    if (picked != null) {
+      setState(() => _alarmTime = picked);
+    }
+  }
+
+  Future<void> _save() async {
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -88,6 +101,12 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       if (savingCycle < 1) savingCycle = 1;
     }
 
+    String? alarmTime;
+    if (_useAlarm) {
+      alarmTime =
+          '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}';
+    }
+
     final habit = Habit(
       id: const Uuid().v4(),
       name: _nameController.text.trim(),
@@ -95,9 +114,24 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       repeatDays: days,
       savingAmount: savingAmount,
       savingCycle: savingCycle,
+      alarmTime: alarmTime,
     );
-    Hive.box<Habit>('habits').add(habit);
-    Navigator.pop(context);
+
+    final box = Hive.box<Habit>('habits');
+    await box.add(habit);
+
+    if (_useAlarm) {
+      await NotificationService().scheduleHabitNotification(
+        id: box.length,
+        habitName: habit.name,
+        icon: habit.icon,
+        hour: _alarmTime.hour,
+        minute: _alarmTime.minute,
+        repeatDays: days,
+      );
+    }
+
+    if (mounted) Navigator.pop(context);
   }
 
   Widget _quickSelectButton(String label, VoidCallback onTap) {
@@ -196,7 +230,6 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             const SizedBox(height: 20),
             const Text('반복 요일', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            // 빠른 선택 버튼
             Row(
               children: [
                 _quickSelectButton('매일', _selectAll),
@@ -207,7 +240,6 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            // 요일 선택
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(7, (index) {
@@ -244,6 +276,55 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 );
               }),
             ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '알림 설정',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Switch(
+                  value: _useAlarm,
+                  activeColor: const Color(0xFFEF9F27),
+                  onChanged: (val) => setState(() => _useAlarm = val),
+                ),
+              ],
+            ),
+            if (_useAlarm) ...[
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _pickTime,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAEEDA),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '알림 시간',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF633806),
+                        ),
+                      ),
+                      Text(
+                        '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFEF9F27),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

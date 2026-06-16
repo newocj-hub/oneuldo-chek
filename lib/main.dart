@@ -3,12 +3,14 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'models/habit.dart';
 import 'screens/home_screen.dart';
+import 'utils/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   Hive.registerAdapter(HabitAdapter());
   await Hive.openBox<Habit>('habits');
+  await NotificationService().init();
   runApp(const MyApp());
 }
 
