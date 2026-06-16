@@ -69,6 +69,24 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
     super.dispose();
   }
 
+  void _selectAll() {
+    setState(() {
+      for (int i = 0; i < 7; i++) _selectedDays[i] = true;
+    });
+  }
+
+  void _selectWeekdays() {
+    setState(() {
+      for (int i = 0; i < 7; i++) _selectedDays[i] = i < 5;
+    });
+  }
+
+  void _selectWeekends() {
+    setState(() {
+      for (int i = 0; i < 7; i++) _selectedDays[i] = i >= 5;
+    });
+  }
+
   void _save() {
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
@@ -102,6 +120,28 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
 
     widget.habit.save();
     Navigator.pop(context);
+  }
+
+  Widget _quickSelectButton(String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFAEEDA),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFEF9F27), width: 1),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF633806),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -178,6 +218,16 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
             const SizedBox(height: 20),
             const Text('반복 요일', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
+            Row(
+              children: [
+                _quickSelectButton('매일', _selectAll),
+                const SizedBox(width: 8),
+                _quickSelectButton('평일', _selectWeekdays),
+                const SizedBox(width: 8),
+                _quickSelectButton('주말', _selectWeekends),
+              ],
+            ),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(7, (index) {
