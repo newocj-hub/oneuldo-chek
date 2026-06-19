@@ -21,44 +21,69 @@ class AppThemeData {
 class AppThemes {
   static const List<AppThemeData> themes = [
     AppThemeData(
-      name: '선셋 오렌지',
-      primary: Color(0xFFEF9F27),
-      light: Color(0xFFFAEEDA),
-      background: Color(0xFFFFFBF2),
-      textDark: Color(0xFF412402),
-      textLight: Color(0xFF633806),
-    ),
-    AppThemeData(
-      name: '라벤더 퍼플',
-      primary: Color(0xFF7F77DD),
-      light: Color(0xFFEEEDFE),
-      background: Color(0xFFF5F4FE),
-      textDark: Color(0xFF26215C),
-      textLight: Color(0xFF3C3489),
-    ),
-    AppThemeData(
       name: '민트 그린',
       primary: Color(0xFF1D9E75),
       light: Color(0xFFE1F5EE),
-      background: Color(0xFFF4FBF8),
+      background: Color(0xFFFDFAF4),
       textDark: Color(0xFF04342C),
       textLight: Color(0xFF0F6E56),
     ),
     AppThemeData(
-      name: '스카이 블루',
-      primary: Color(0xFF378ADD),
-      light: Color(0xFFE6F1FB),
-      background: Color(0xFFF2F8FE),
-      textDark: Color(0xFF042C53),
-      textLight: Color(0xFF185FA5),
+      name: '피치 오렌지',
+      primary: Color(0xFFD4783A),
+      light: Color(0xFFFFE8D6),
+      background: Color(0xFFFFF8F3),
+      textDark: Color(0xFF4A2010),
+      textLight: Color(0xFF7A3D1A),
+    ),
+    AppThemeData(
+      name: '라벤더',
+      primary: Color(0xFF6058B8),
+      light: Color(0xFFEAE8FF),
+      background: Color(0xFFF8F7FF),
+      textDark: Color(0xFF26215C),
+      textLight: Color(0xFF3A3480),
     ),
     AppThemeData(
       name: '로즈 핑크',
-      primary: Color(0xFFD4537E),
-      light: Color(0xFFFBEAF0),
-      background: Color(0xFFFEF5F8),
+      primary: Color(0xFFA8345E),
+      light: Color(0xFFFFE0EB),
+      background: Color(0xFFFFF5F8),
       textDark: Color(0xFF4B1528),
-      textLight: Color(0xFF993556),
+      textLight: Color(0xFF6B1835),
     ),
+    AppThemeData(
+      name: '크림 아이보리',
+      primary: Color(0xFF7A6040),
+      light: Color(0xFFF2ECD8),
+      background: Color(0xFFFDFAF5),
+      textDark: Color(0xFF2C2010),
+      textLight: Color(0xFF4A3B1F),
+    ),
+  ];
+}
+
+class BankApp {
+  final String name;
+  final String emoji;
+  final String scheme;
+
+  const BankApp({
+    required this.name,
+    required this.emoji,
+    required this.scheme,
+  });
+}
+
+class BankApps {
+  static const List<BankApp> apps = [
+    BankApp(name: '토스', emoji: '💙', scheme: 'supertoss://'),
+    BankApp(name: '카카오뱅크', emoji: '💛', scheme: 'kakaobank://'),
+    BankApp(name: '국민은행', emoji: '🟡', scheme: 'kbbank://'),
+    BankApp(name: '신한은행', emoji: '🔵', scheme: 'shinhan://'),
+    BankApp(name: '우리은행', emoji: '🔵', scheme: 'wooribank://'),
+    BankApp(name: '하나은행', emoji: '🟢', scheme: 'hanabank://'),
+    BankApp(name: '농협은행', emoji: '🟢', scheme: 'nonghyup://'),
+    BankApp(name: '케이뱅크', emoji: '⚫', scheme: 'kbank://'),
   ];
 }

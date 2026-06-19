@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/habit.dart';
 import '../utils/theme_provider.dart';
 import 'add_habit_screen.dart';
@@ -20,9 +21,53 @@ class HomeScreen extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-    final weekday = weekdays[date.weekday - 1];
-    return '${date.month}/${date.day} ($weekday)';
+    const weekdays = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
+    return '${date.month}월 ${date.day}일 ${weekdays[date.weekday - 1]}';
+  }
+
+  String _getCheerMessage(int completed, int total) {
+    if (total == 0) return '오늘의 습관을 추가해보세요! 🌱';
+    if (completed == 0) return '오늘도 할 수 있어요! 💪';
+    if (completed == total) return '오늘 목표 완료! 정말 잘했어요! 🎉';
+    if (completed >= total / 2) return '절반 넘었어요! 조금만 더! 🔥';
+    return '시작이 반이에요! 계속해봐요! 😊';
+  }
+
+  String _getSavingMessage(int amount) {
+    if (amount <= 0) return '절약을 시작해보세요!';
+    if (amount < 5000) return '편의점 간식 ${(amount ~/ 1500)}개 값이에요! 🍫';
+    if (amount < 15000) return '아메리카노 ${(amount ~/ 4500)}잔 값이에요! ☕';
+    if (amount < 25000) return '편의점 도시락 ${(amount ~/ 5000)}개 값이에요! 🍱';
+    if (amount < 50000) return '치킨 ${(amount ~/ 20000)}마리 값이에요! 🍗';
+    if (amount < 100000) return '맛있는 식사 ${(amount ~/ 30000)}번 값이에요! 🍽️';
+    return '여행 적금 모으는 중이에요! ✈️';
+  }
+
+  Color _getIconBg(int index) {
+    final colors = [
+      const Color(0xFFE1F5EE),
+      const Color(0xFFFFE8D6),
+      const Color(0xFFEAE8FF),
+      const Color(0xFFFFE0EB),
+      const Color(0xFFE6F1FB),
+      const Color(0xFFFFF8E8),
+    ];
+    return colors[index % colors.length];
+  }
+
+  Future<void> _launchBankApp(BuildContext context) async {
+    final themeProvider = context.read<ThemeProvider>();
+    final bank = themeProvider.currentBank;
+    final uri = Uri.parse(bank.scheme);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${bank.name} 앱을 열 수 없어요. 설치되어 있는지 확인해주세요!')),
+        );
+      }
+    }
   }
 
   @override
@@ -36,140 +81,389 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.background,
-      appBar: AppBar(
-        backgroundColor: theme.primary,
-        title: Text(
-          '오늘도첵',
-          style: TextStyle(color: theme.textDark, fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                _formatDate(today),
-                style: TextStyle(
-                  color: theme.textDark,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.bar_chart, color: theme.textDark),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const StatsScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.settings, color: theme.textDark),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: ValueListenableBuilder(
-        valueListenable: box.listenable(),
-        builder: (context, Box<Habit> box, _) {
-          final habits = box.values
-              .where((h) => h.repeatDays.contains(weekday))
-              .toList();
-          final completed = habits.where((h) => h.isCompletedToday).length;
-          final totalSaving = box.values.fold<int>(
-            0,
-            (sum, h) => sum + h.totalSaving,
-          );
+      body: SafeArea(
+        child: ValueListenableBuilder(
+          valueListenable: box.listenable(),
+          builder: (context, Box<Habit> box, _) {
+            final habits = box.values
+                .where((h) => h.repeatDays.contains(weekday))
+                .toList();
+            final completed = habits.where((h) => h.isCompletedToday).length;
+            final totalSaving = box.values.fold<int>(
+              0,
+              (sum, h) => sum + h.totalSaving,
+            );
+            final todaySaving = habits
+                .where((h) => h.isCompletedToday)
+                .fold<int>(0, (sum, h) => sum + h.todaySaving);
 
-          return Column(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                color: theme.light,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+            // 통계
+            final allHabits = box.values.toList();
+            final totalDays = allHabits.fold<int>(
+              0,
+              (sum, h) => sum + h.completedDates.length,
+            );
+            final longestStreak = allHabits.isEmpty
+                ? 0
+                : allHabits
+                      .map((h) => h.longestStreak)
+                      .reduce((a, b) => a > b ? a : b);
+
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('🔥', style: TextStyle(fontSize: 24)),
-                        const SizedBox(width: 8),
                         Text(
-                          habits.isEmpty
-                              ? '습관을 추가해보세요!'
-                              : '$completed / ${habits.length} 완료',
+                          '오늘도첵',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: theme.textLight,
+                            color: theme.primary,
                           ),
+                        ),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const StatsScreen(),
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.bar_chart_rounded,
+                                color: theme.textLight,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const SettingsScreen(),
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.settings_outlined,
+                                color: theme.textLight,
+                                size: 24,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    if (totalSaving > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                  ),
+                ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                    child: Text(
+                      _formatDate(today),
+                      style: TextStyle(fontSize: 13, color: theme.textLight),
+                    ),
+                  ),
+                ),
+
+                // 히어로 카드
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getCheerMessage(completed, habits.length),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: theme.textLight,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${_formatMoney(totalSaving)}원',
+                                      style: TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.primary,
+                                      ),
+                                    ),
+                                    Text(
+                                      _getSavingMessage(totalSaving),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: theme.textLight,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Text('🐷', style: TextStyle(fontSize: 48)),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          GestureDetector(
+                            onTap: () => _launchBankApp(context),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: theme.primary,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text('🐷', style: TextStyle(fontSize: 16)),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    '지금 저축하기',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 통계 배지
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: Row(
+                      children: [
+                        _StatBadge(
+                          value: '${totalDays}일',
+                          label: '총 달성일',
+                          color: const Color(0xFFF5A97A),
+                          bg: const Color(0xFFFFE8D6),
                         ),
-                        decoration: BoxDecoration(
+                        const SizedBox(width: 8),
+                        _StatBadge(
+                          value: '${longestStreak}일',
+                          label: '최장 스트릭 ⭐',
+                          color: const Color(0xFFE5C040),
+                          bg: const Color(0xFFFFF8D6),
+                        ),
+                        const SizedBox(width: 8),
+                        _StatBadge(
+                          value: '${_formatMoney(totalSaving)}원',
+                          label: '누적 절약',
                           color: theme.primary,
-                          borderRadius: BorderRadius.circular(20),
+                          bg: theme.light,
                         ),
-                        child: Text(
-                          '💰 ${_formatMoney(totalSaving)}원 절약',
+                      ],
+                    ),
+                  ),
+                ),
+
+                // 오늘의 습관 타이틀
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '오늘의 습관',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: theme.textDark,
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: habits.isEmpty
-                    ? Center(
-                        child: Text(
-                          '오늘의 습관이 없어요\n아래 + 버튼으로 추가해보세요!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: theme.textLight),
+                        GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AddHabitScreen(),
+                            ),
+                          ),
+                          child: Text(
+                            '+ 추가하기',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: theme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: habits.length,
-                        itemBuilder: (context, index) {
-                          final habit = habits[index];
-                          return _HabitCard(
-                            habit: habit,
-                            todayKey: todayKey,
-                            theme: theme,
-                          );
-                        },
+                      ],
+                    ),
+                  ),
+                ),
+
+                // 습관 목록
+                if (habits.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 32),
+                      child: Center(
+                        child: Text(
+                          '오늘의 습관이 없어요\n+ 추가하기를 눌러 시작해보세요!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: theme.textLight,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
-              ),
-            ],
-          );
-        },
+                    ),
+                  )
+                else
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final habit = habits[index];
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                        child: _HabitCard(
+                          habit: habit,
+                          todayKey: todayKey,
+                          theme: theme,
+                          iconBg: _getIconBg(index),
+                        ),
+                      );
+                    }, childCount: habits.length),
+                  ),
+
+                // 응원 메시지 카드
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF8E8),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          const Text('🌱', style: TextStyle(fontSize: 28)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  completed == habits.length &&
+                                          habits.isNotEmpty
+                                      ? '오늘도 정말 잘했어요! 👏'
+                                      : '작은 습관이 큰 변화를 만들어요 💚',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF4A3B1F),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  completed == habits.length &&
+                                          habits.isNotEmpty
+                                      ? '오늘 절약한 금액: ${_formatMoney(todaySaving)}원 🎉'
+                                      : '매일 조금씩, 꾸준히 함께해요!',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF8C7A60),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: theme.primary,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddHabitScreen()),
-          );
-        },
-        child: Icon(Icons.add, color: theme.textDark),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AddHabitScreen()),
+        ),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+    );
+  }
+}
+
+class _StatBadge extends StatelessWidget {
+  final String value;
+  final String label;
+  final Color color;
+  final Color bg;
+
+  const _StatBadge({
+    required this.value,
+    required this.label,
+    required this.color,
+    required this.bg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 9, color: Color(0xFF8C7A60)),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -179,11 +473,13 @@ class _HabitCard extends StatelessWidget {
   final Habit habit;
   final String todayKey;
   final dynamic theme;
+  final Color iconBg;
 
   const _HabitCard({
     required this.habit,
     required this.todayKey,
     required this.theme,
+    required this.iconBg,
   });
 
   String _formatMoney(int amount) {
@@ -198,7 +494,7 @@ class _HabitCard extends StatelessWidget {
       context: context,
       backgroundColor: theme.background,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) => Padding(
         padding: const EdgeInsets.all(20),
@@ -216,15 +512,11 @@ class _HabitCard extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               '${habit.icon} ${habit.name}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2C2C2A),
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             ListTile(
-              leading: Icon(Icons.edit, color: theme.primary),
+              leading: Icon(Icons.edit_outlined, color: theme.primary),
               title: const Text('수정하기'),
               onTap: () {
                 Navigator.pop(context);
@@ -237,7 +529,7 @@ class _HabitCard extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
               title: const Text('삭제하기', style: TextStyle(color: Colors.red)),
               onTap: () {
                 Navigator.pop(context);
@@ -278,75 +570,93 @@ class _HabitCard extends StatelessWidget {
     final totalSaving = habit.totalSaving;
 
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => HabitDetailScreen(habit: habit)),
-        );
-      },
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => HabitDetailScreen(habit: habit)),
+      ),
       onLongPress: () => _showMenu(context),
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 12),
-        color: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-          leading: Text(habit.icon, style: const TextStyle(fontSize: 28)),
-          title: Text(
-            habit.name,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isDone ? Colors.grey : const Color(0xFF2C2C2A),
-              decoration: isDone ? TextDecoration.lineThrough : null,
-            ),
-          ),
-          subtitle: Row(
-            children: [
-              const Text('🔥', style: TextStyle(fontSize: 12)),
-              const SizedBox(width: 2),
-              Text(
-                '${habit.currentStreak}일',
-                style: TextStyle(fontSize: 12, color: theme.textLight),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isDone ? theme.light : iconBg,
+                shape: BoxShape.circle,
               ),
-              if (habit.savingAmount > 0) ...[
-                const SizedBox(width: 8),
-                Text(
-                  '💰 ${_formatMoney(totalSaving)}원 절약',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.primary,
-                    fontWeight: FontWeight.bold,
+              child: Center(
+                child: Text(habit.icon, style: const TextStyle(fontSize: 24)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    habit.name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: isDone
+                          ? const Color(0xFFC0B8B0)
+                          : const Color(0xFF2C2010),
+                      decoration: isDone ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '🔥 ${habit.currentStreak}일 연속',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF8C7A60),
+                    ),
+                  ),
+                  if (habit.savingAmount > 0)
+                    Text(
+                      '오늘 절약 ${_formatMoney(habit.todaySaving)}원',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: theme.primary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                if (isDone) {
+                  habit.completedDates.remove(todayKey);
+                } else {
+                  habit.completedDates.add(todayKey);
+                }
+                habit.save();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDone ? theme.primary : Colors.transparent,
+                  border: Border.all(
+                    color: isDone ? theme.primary : const Color(0xFFD0C8C0),
+                    width: 1.5,
                   ),
                 ),
-              ],
-            ],
-          ),
-          trailing: GestureDetector(
-            onTap: () {
-              if (isDone) {
-                habit.completedDates.remove(todayKey);
-              } else {
-                habit.completedDates.add(todayKey);
-              }
-              habit.save();
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isDone ? theme.primary : Colors.transparent,
-                border: Border.all(color: theme.primary, width: 2),
+                child: isDone
+                    ? const Icon(Icons.check, size: 18, color: Colors.white)
+                    : null,
               ),
-              child: isDone
-                  ? const Icon(Icons.check, size: 18, color: Colors.white)
-                  : null,
             ),
-          ),
+          ],
         ),
       ),
     );
