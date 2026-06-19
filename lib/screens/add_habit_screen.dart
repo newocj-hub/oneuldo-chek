@@ -48,32 +48,24 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     '💧',
   ];
 
-  void _selectAll() {
-    setState(() {
-      for (int i = 0; i < 7; i++) _selectedDays[i] = true;
-    });
-  }
+  void _selectAll() => setState(() {
+    for (int i = 0; i < 7; i++) _selectedDays[i] = true;
+  });
 
-  void _selectWeekdays() {
-    setState(() {
-      for (int i = 0; i < 7; i++) _selectedDays[i] = i < 5;
-    });
-  }
+  void _selectWeekdays() => setState(() {
+    for (int i = 0; i < 7; i++) _selectedDays[i] = i < 5;
+  });
 
-  void _selectWeekends() {
-    setState(() {
-      for (int i = 0; i < 7; i++) _selectedDays[i] = i >= 5;
-    });
-  }
+  void _selectWeekends() => setState(() {
+    for (int i = 0; i < 7; i++) _selectedDays[i] = i >= 5;
+  });
 
   Future<void> _pickTime() async {
     final picked = await showTimePicker(
       context: context,
       initialTime: _alarmTime,
     );
-    if (picked != null) {
-      setState(() => _alarmTime = picked);
-    }
+    if (picked != null) setState(() => _alarmTime = picked);
   }
 
   Future<void> _save() async {
@@ -136,318 +128,315 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     if (mounted) Navigator.pop(context);
   }
 
-  Widget _quickSelectButton(String label, VoidCallback onTap, dynamic theme) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: theme.light,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.primary, width: 1),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: theme.textLight,
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = context.watch<ThemeProvider>().currentTheme;
 
     return Scaffold(
       backgroundColor: theme.background,
-      appBar: AppBar(
-        backgroundColor: theme.primary,
-        title: Text(
-          '절약 습관 추가',
-          style: TextStyle(color: theme.textDark, fontWeight: FontWeight.bold),
-        ),
-        iconTheme: IconThemeData(color: theme.textDark),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '습관 이름',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: theme.textDark,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                hintText: '예: 담배 끊기',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              '아이콘 선택',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: theme.textDark,
-              ),
-            ),
-            const SizedBox(height: 8),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 6,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-              ),
-              itemCount: _icons.length,
-              itemBuilder: (context, index) {
-                final icon = _icons[index];
-                final isSelected = icon == _selectedIcon;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedIcon = icon),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isSelected ? theme.light : Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelected ? theme.primary : Colors.transparent,
-                        width: 2,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(icon, style: const TextStyle(fontSize: 24)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Icon(
+                      Icons.arrow_back_ios_rounded,
+                      color: theme.textDark,
+                      size: 20,
                     ),
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 20),
-            Text(
-              '반복 요일',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: theme.textDark,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _quickSelectButton('매일', _selectAll, theme),
-                const SizedBox(width: 8),
-                _quickSelectButton('평일', _selectWeekdays, theme),
-                const SizedBox(width: 8),
-                _quickSelectButton('주말', _selectWeekends, theme),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(7, (index) {
-                final isSelected = _selectedDays[index];
-                return GestureDetector(
-                  onTap: () => setState(
-                    () => _selectedDays[index] = !_selectedDays[index],
-                  ),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isSelected ? theme.primary : Colors.white,
-                      border: Border.all(color: theme.primary, width: 1.5),
-                    ),
-                    child: Center(
-                      child: Text(
-                        _dayLabels[index],
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? theme.textDark : theme.primary,
-                        ),
-                      ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '절약 습관 추가',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textDark,
                     ),
                   ),
-                );
-              }),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '알림 설정',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: theme.textDark,
-                  ),
-                ),
-                Switch(
-                  value: _useAlarm,
-                  activeColor: theme.primary,
-                  onChanged: (val) => setState(() => _useAlarm = val),
-                ),
-              ],
-            ),
-            if (_useAlarm) ...[
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: _pickTime,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.light,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '알림 시간',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: theme.textLight,
-                        ),
-                      ),
-                      Text(
-                        '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: theme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ),
-            ],
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '절약 금액 설정',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: theme.textDark,
-                  ),
-                ),
-                Switch(
-                  value: _useSaving,
-                  activeColor: theme.primary,
-                  onChanged: (val) => setState(() => _useSaving = val),
-                ),
-              ],
             ),
-            if (_useSaving) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.light,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _SectionTitle('습관 이름', theme),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: TextField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          hintText: '예: 담배 끊기',
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.all(16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _SectionTitle('아이콘 선택', theme),
+                    const SizedBox(height: 8),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 6,
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                          ),
+                      itemCount: _icons.length,
+                      itemBuilder: (context, index) {
+                        final icon = _icons[index];
+                        final isSelected = icon == _selectedIcon;
+                        return GestureDetector(
+                          onTap: () => setState(() => _selectedIcon = icon),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isSelected ? theme.light : Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isSelected
+                                    ? theme.primary
+                                    : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                icon,
+                                style: const TextStyle(fontSize: 24),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _SectionTitle('반복 요일', theme),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
-                        SizedBox(
-                          width: 60,
-                          child: TextField(
-                            controller: _cycleController,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            textAlign: TextAlign.center,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
+                        _QuickBtn('매일', theme, _selectAll),
+                        const SizedBox(width: 8),
+                        _QuickBtn('평일', theme, _selectWeekdays),
+                        const SizedBox(width: 8),
+                        _QuickBtn('주말', theme, _selectWeekends),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(7, (index) {
+                        final isSelected = _selectedDays[index];
+                        return GestureDetector(
+                          onTap: () => setState(
+                            () => _selectedDays[index] = !_selectedDays[index],
+                          ),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isSelected ? theme.primary : Colors.white,
+                              border: Border.all(
+                                color: theme.primary,
+                                width: 1.5,
                               ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 10,
+                            ),
+                            child: Center(
+                              child: Text(
+                                _dayLabels[index],
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : theme.primary,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(
-                            '일마다',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: theme.textLight,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: TextField(
-                            controller: _amountController,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: InputDecoration(
-                              hintText: '절약 금액',
-                              suffixText: '원',
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 10,
-                                horizontal: 12,
-                              ),
-                            ),
-                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _SectionTitle('알림 설정', theme),
+                        Switch(
+                          value: _useAlarm,
+                          activeColor: theme.primary,
+                          onChanged: (val) => setState(() => _useAlarm = val),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '예: 3일마다 4,500원 → 담배 한 갑',
-                      style: TextStyle(fontSize: 12, color: theme.textLight),
+                    if (_useAlarm) ...[
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: _pickTime,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: theme.light,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '알림 시간',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.textLight,
+                                ),
+                              ),
+                              Text(
+                                '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _SectionTitle('절약 금액 설정', theme),
+                        Switch(
+                          value: _useSaving,
+                          activeColor: theme.primary,
+                          onChanged: (val) => setState(() => _useSaving = val),
+                        ),
+                      ],
+                    ),
+                    if (_useSaving) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: theme.light,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 60,
+                                  child: TextField(
+                                    controller: _cycleController,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    textAlign: TextAlign.center,
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 10,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Text(
+                                    '일마다',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.textLight,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _amountController,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    decoration: InputDecoration(
+                                      hintText: '절약 금액',
+                                      suffixText: '원',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 10,
+                                            horizontal: 12,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '예: 3일마다 4,500원 → 담배 한 갑',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: theme.textLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _save,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          '저장하기',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.primary,
-                  foregroundColor: theme.textDark,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  '저장하기',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -456,4 +445,37 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       ),
     );
   }
+}
+
+Widget _SectionTitle(String title, dynamic theme) {
+  return Text(
+    title,
+    style: TextStyle(
+      fontWeight: FontWeight.bold,
+      fontSize: 15,
+      color: theme.textDark,
+    ),
+  );
+}
+
+Widget _QuickBtn(String label, dynamic theme, VoidCallback onTap) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.light,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.primary, width: 1),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: theme.textLight,
+        ),
+      ),
+    ),
+  );
 }

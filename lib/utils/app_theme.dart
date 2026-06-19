@@ -77,13 +77,7 @@ class BankApp {
 
 class BankApps {
   static const List<BankApp> apps = [
-    BankApp(name: '토스', emoji: '💙', scheme: 'supertoss://'),
     BankApp(name: '카카오뱅크', emoji: '💛', scheme: 'kakaobank://'),
-    BankApp(name: '국민은행', emoji: '🟡', scheme: 'kbbank://'),
-    BankApp(name: '신한은행', emoji: '🔵', scheme: 'shinhan://'),
-    BankApp(name: '우리은행', emoji: '🔵', scheme: 'wooribank://'),
-    BankApp(name: '하나은행', emoji: '🟢', scheme: 'hanabank://'),
-    BankApp(name: '농협은행', emoji: '🟢', scheme: 'nonghyup://'),
-    BankApp(name: '케이뱅크', emoji: '⚫', scheme: 'kbank://'),
+    BankApp(name: '토스', emoji: '💙', scheme: 'supertoss://'),
   ];
 }
