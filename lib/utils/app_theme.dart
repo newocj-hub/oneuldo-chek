@@ -65,19 +65,39 @@ class AppThemes {
 
 class BankApp {
   final String name;
-  final String emoji;
+  final String initial;
+  final Color bgColor;
+  final Color textColor;
   final String scheme;
+  final String packageName;
 
   const BankApp({
     required this.name,
-    required this.emoji,
+    required this.initial,
+    required this.bgColor,
+    required this.textColor,
     required this.scheme,
+    required this.packageName,
   });
 }
 
 class BankApps {
   static const List<BankApp> apps = [
-    BankApp(name: '카카오뱅크', emoji: '💛', scheme: 'kakaobank://'),
-    BankApp(name: '토스', emoji: '💙', scheme: 'supertoss://'),
+    BankApp(
+      name: '카카오뱅크',
+      initial: 'K',
+      bgColor: Color(0xFFFFE234),
+      textColor: Color(0xFF1A1A1A),
+      scheme: 'kakaobank://',
+      packageName: 'com.kakaobank.channel',
+    ),
+    BankApp(
+      name: '토스',
+      initial: 'T',
+      bgColor: Color(0xFF0064FF),
+      textColor: Colors.white,
+      scheme: 'supertoss://send?',
+      packageName: 'viva.republica.toss',
+    ),
   ];
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/habit.dart';
+import '../utils/app_theme.dart';
 import '../utils/theme_provider.dart';
 import 'add_habit_screen.dart';
 import 'edit_habit_screen.dart';
@@ -34,13 +36,13 @@ class HomeScreen extends StatelessWidget {
   }
 
   String _getSavingMessage(int amount) {
-    if (amount <= 0) return '절약을 시작해보세요!';
+    if (amount <= 0) return '오늘 절약을 시작해보세요!';
     if (amount < 5000) return '편의점 간식 ${(amount ~/ 1500)}개 값이에요! 🍫';
     if (amount < 15000) return '아메리카노 ${(amount ~/ 4500)}잔 값이에요! ☕';
     if (amount < 25000) return '편의점 도시락 ${(amount ~/ 5000)}개 값이에요! 🍱';
     if (amount < 50000) return '치킨 ${(amount ~/ 20000)}마리 값이에요! 🍗';
     if (amount < 100000) return '맛있는 식사 ${(amount ~/ 30000)}번 값이에요! 🍽️';
-    return '여행 적금 모으는 중이에요! ✈️';
+    return '오늘 정말 많이 절약했어요! ✈️';
   }
 
   Color _getIconBg(int index) {
@@ -55,17 +57,141 @@ class HomeScreen extends StatelessWidget {
     return colors[index % colors.length];
   }
 
-  Future<void> _launchBankApp(BuildContext context) async {
-    final themeProvider = context.read<ThemeProvider>();
-    final bank = themeProvider.currentBank;
+  Future<void> _showBankPopup(BuildContext context) async {
+    final theme = context.read<ThemeProvider>().currentTheme;
+
+    List<BankApp> installedBanks = [];
+    for (final bank in BankApps.apps) {
+      final uri = Uri.parse(bank.scheme);
+      if (await canLaunchUrl(uri)) {
+        installedBanks.add(bank);
+      }
+    }
+
+    if (!context.mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '어디에 저축할까요? 🐷',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: theme.textDark,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '설치된 금융앱을 선택해주세요',
+              style: TextStyle(fontSize: 12, color: theme.textLight),
+            ),
+            const SizedBox(height: 16),
+            installedBanks.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Text(
+                      '설치된 금융앱이 없어요 😢\n카카오뱅크, 토스 등을 설치해보세요!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: theme.textLight),
+                    ),
+                  )
+                : GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          childAspectRatio: 0.85,
+                        ),
+                    itemCount: installedBanks.length,
+                    itemBuilder: (context, index) {
+                      final bank = installedBanks[index];
+                      return GestureDetector(
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await _launchBankApp(context, bank);
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: bank.bgColor,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  bank.initial,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: bank.textColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              bank.name,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: theme.textDark,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchBankApp(BuildContext context, BankApp bank) async {
     final uri = Uri.parse(bank.scheme);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${bank.name} 앱을 열 수 없어요. 설치되어 있는지 확인해주세요!')),
-        );
+      final playStoreUri = Uri.parse(
+        'https://play.google.com/store/apps/details?id=${bank.packageName}',
+      );
+      if (await canLaunchUrl(playStoreUri)) {
+        await launchUrl(playStoreUri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('${bank.name} 앱을 열 수 없어요!')));
+        }
       }
     }
   }
@@ -94,15 +220,9 @@ class HomeScreen extends StatelessWidget {
               (sum, h) => sum + h.totalSaving,
             );
             final todaySaving = habits
-                .where((h) => h.isCompletedToday)
+                .where((h) => h.isCompletedToday && h.savingAmount > 0)
                 .fold<int>(0, (sum, h) => sum + h.todaySaving);
-
-            // 통계
             final allHabits = box.values.toList();
-            final totalDays = allHabits.fold<int>(
-              0,
-              (sum, h) => sum + h.completedDates.length,
-            );
             final longestStreak = allHabits.isEmpty
                 ? 0
                 : allHabits
@@ -171,7 +291,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // 히어로 카드
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -200,15 +319,22 @@ class HomeScreen extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '${_formatMoney(totalSaving)}원',
+                                      '오늘 절약',
                                       style: TextStyle(
-                                        fontSize: 32,
+                                        fontSize: 12,
+                                        color: theme.textLight,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${_formatMoney(todaySaving)}원',
+                                      style: TextStyle(
+                                        fontSize: 36,
                                         fontWeight: FontWeight.bold,
                                         color: theme.primary,
                                       ),
                                     ),
                                     Text(
-                                      _getSavingMessage(totalSaving),
+                                      _getSavingMessage(todaySaving),
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: theme.textLight,
@@ -217,12 +343,16 @@ class HomeScreen extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              const Text('🐷', style: TextStyle(fontSize: 48)),
+                              Image.asset(
+                                'assets/images/piggy_bank.png',
+                                width: 90,
+                                height: 90,
+                              ),
                             ],
                           ),
                           const SizedBox(height: 14),
                           GestureDetector(
-                            onTap: () => _launchBankApp(context),
+                            onTap: () => _showBankPopup(context),
                             child: Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -230,12 +360,16 @@ class HomeScreen extends StatelessWidget {
                                 color: theme.primary,
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text('🐷', style: TextStyle(fontSize: 16)),
-                                  SizedBox(width: 6),
-                                  Text(
+                                  Image.asset(
+                                    'assets/images/piggy_bank.png',
+                                    width: 22,
+                                    height: 22,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Text(
                                     '지금 저축하기',
                                     style: TextStyle(
                                       color: Colors.white,
@@ -243,8 +377,8 @@ class HomeScreen extends StatelessWidget {
                                       fontSize: 15,
                                     ),
                                   ),
-                                  SizedBox(width: 4),
-                                  Icon(
+                                  const SizedBox(width: 4),
+                                  const Icon(
                                     Icons.chevron_right,
                                     color: Colors.white,
                                     size: 18,
@@ -259,17 +393,16 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // 통계 배지
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                     child: Row(
                       children: [
                         _StatBadge(
-                          value: '${totalDays}일',
-                          label: '총 달성일',
-                          color: const Color(0xFFF5A97A),
-                          bg: const Color(0xFFFFE8D6),
+                          value: '$completed / ${habits.length}',
+                          label: '오늘 완료 ✅',
+                          color: theme.primary,
+                          bg: theme.light,
                         ),
                         const SizedBox(width: 8),
                         _StatBadge(
@@ -281,16 +414,15 @@ class HomeScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         _StatBadge(
                           value: '${_formatMoney(totalSaving)}원',
-                          label: '누적 절약',
-                          color: theme.primary,
-                          bg: theme.light,
+                          label: '누적 절약 💰',
+                          color: const Color(0xFFF5A97A),
+                          bg: const Color(0xFFFFE8D6),
                         ),
                       ],
                     ),
                   ),
                 ),
 
-                // 오늘의 습관 타이틀
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
@@ -326,7 +458,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // 습관 목록
                 if (habits.isEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
@@ -359,7 +490,6 @@ class HomeScreen extends StatelessWidget {
                     }, childCount: habits.length),
                   ),
 
-                // 응원 메시지 카드
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
