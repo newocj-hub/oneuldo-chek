@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'models/habit.dart';
 import 'screens/home_screen.dart';
 import 'utils/notification_service.dart';
@@ -14,12 +15,17 @@ void main() async {
   await Hive.openBox<Habit>('habits');
   await Hive.openBox('settings');
   await NotificationService().init();
+  await _requestPermissions();
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
       child: const MyApp(),
     ),
   );
+}
+
+Future<void> _requestPermissions() async {
+  await Permission.notification.request();
 }
 
 class MyApp extends StatelessWidget {

@@ -17,6 +17,20 @@ class NotificationService {
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const settings = InitializationSettings(android: android);
     await _plugin.initialize(settings);
+
+    // 알림 채널 수동 생성
+    const channel = AndroidNotificationChannel(
+      'habit_channel',
+      '습관 알림',
+      description: '절약 습관 알림',
+      importance: Importance.max,
+    );
+
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(channel);
   }
 
   Future<void> scheduleHabitNotification({

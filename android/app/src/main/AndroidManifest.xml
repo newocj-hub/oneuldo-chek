@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <application
         android:label="오늘도첵"
         android:name="${applicationName}"
@@ -32,11 +36,5 @@
         </intent>
         <package android:name="viva.republica.toss"/>
         <package android:name="com.kakaobank.channel"/>
-        <package android:name="com.kbstar.kbbank"/>
-        <package android:name="com.shinhan.smartcaremgr"/>
-        <package android:name="com.wooribank.smart.wscd"/>
-        <package android:name="com.hanaskcard.rocomo.pjt"/>
-        <package android:name="nh.smart.nhallonepay"/>
-        <package android:name="com.kbankwith.smartbank"/>
     </queries>
 </manifest>

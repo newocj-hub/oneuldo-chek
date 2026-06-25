@@ -64,6 +64,16 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     final picked = await showTimePicker(
       context: context,
       initialTime: _alarmTime,
+      initialEntryMode: TimePickerEntryMode.dial,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            alwaysUse24HourFormat: false,
+            textScaler: const TextScaler.linear(1.0),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) setState(() => _alarmTime = picked);
   }
