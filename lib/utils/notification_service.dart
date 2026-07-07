@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
@@ -33,10 +32,7 @@ class NotificationService {
         >();
     await androidPlugin?.createNotificationChannel(channel);
 
-    // Android 12+에서는 정확한 알람 예약을 위해 별도 권한이 필요함
-    // (미허용 시 zonedSchedule의 exactAllowWhileIdle 모드가 알림을 예약하지 못함)
     await androidPlugin?.requestNotificationsPermission();
-    await androidPlugin?.requestExactAlarmsPermission();
   }
 
   Future<void> scheduleHabitNotification({
@@ -65,33 +61,17 @@ class NotificationService {
         ),
       );
 
-      try {
-        await _plugin.zonedSchedule(
-          notificationId,
-          '$icon $habitName',
-          '오늘도 실천하고 절약해요! 💰',
-          scheduledDate,
-          details,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-        );
-      } on PlatformException {
-        // 사용자가 '정확한 알람' 권한을 거부한 경우 등에는 정확한 예약이 불가능하므로
-        // 알림이 아예 등록되지 않는 것을 막기 위해 비정확 모드로 대체 예약한다.
-        await _plugin.zonedSchedule(
-          notificationId,
-          '$icon $habitName',
-          '오늘도 실천하고 절약해요! 💰',
-          scheduledDate,
-          details,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-        );
-      }
+      await _plugin.zonedSchedule(
+        notificationId,
+        '$icon $habitName',
+        '오늘도 실천하고 절약해요! 💰',
+        scheduledDate,
+        details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
     }
   }
 
