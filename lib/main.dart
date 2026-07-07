@@ -26,12 +26,6 @@ void main() async {
 
 Future<void> _requestPermissions() async {
   await Permission.notification.request();
-
-  // Doze 모드에서 화면이 꺼져 있으면 배터리 최적화로 인해 예약 알림이
-  // 지연되거나 아예 울리지 않을 수 있어, 배터리 최적화 제외를 요청한다.
-  if (await Permission.ignoreBatteryOptimizations.isDenied) {
-    await Permission.ignoreBatteryOptimizations.request();
-  }
 }
 
 class MyApp extends StatelessWidget {
