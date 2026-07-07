@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -57,8 +58,10 @@ class HomeScreen extends StatelessWidget {
     return colors[index % colors.length];
   }
 
-  Future<void> _showBankPopup(BuildContext context) async {
+  Future<void> _showBankPopup(BuildContext context, int amount) async {
     final theme = context.read<ThemeProvider>().currentTheme;
+
+    await Clipboard.setData(ClipboardData(text: amount.toString()));
 
     List<BankApp> installedBanks = [];
     for (final bank in BankApps.apps) {
@@ -69,6 +72,10 @@ class HomeScreen extends StatelessWidget {
     }
 
     if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${_formatMoney(amount)}원이 클립보드에 복사됐어요! 📋')),
+    );
 
     showModalBottomSheet(
       context: context,
@@ -344,7 +351,7 @@ class HomeScreen extends StatelessWidget {
                                 ),
                               ),
                               Image.asset(
-                                'assets/images/piggy_bank.png',
+                                'assets/images/piggy_bank2.png',
                                 width: 90,
                                 height: 90,
                               ),
@@ -352,7 +359,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 14),
                           GestureDetector(
-                            onTap: () => _showBankPopup(context),
+                            onTap: () => _showBankPopup(context, todaySaving),
                             child: Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -364,7 +371,7 @@ class HomeScreen extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Image.asset(
-                                    'assets/images/piggy_bank.png',
+                                    'assets/images/piggy_bank2.png',
                                     width: 22,
                                     height: 22,
                                   ),
