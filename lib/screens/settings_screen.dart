@@ -1,12 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../models/habit.dart';
 import '../utils/app_theme.dart';
 import '../utils/theme_provider.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen>
+    with WidgetsBindingObserver {
+  bool _batteryOptimizationIgnored = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refreshBatteryOptimizationStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshBatteryOptimizationStatus();
+    }
+  }
+
+  Future<void> _refreshBatteryOptimizationStatus() async {
+    final granted = await Permission.ignoreBatteryOptimizations.isGranted;
+    if (mounted) {
+      setState(() => _batteryOptimizationIgnored = granted);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +146,85 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       );
                     }),
+                    const SizedBox(height: 24),
+                    Text(
+                      '알림 설정',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: currentTheme.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: _batteryOptimizationIgnored
+                          ? null
+                          : () async {
+                              await Permission.ignoreBatteryOptimizations
+                                  .request();
+                              _refreshBatteryOptimizationStatus();
+                            },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: currentTheme.light,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.notifications_active_outlined,
+                                color: currentTheme.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '화면이 꺼져있어도 정확한 시간에 알림받기',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: currentTheme.textDark,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _batteryOptimizationIgnored
+                                        ? '설정 완료! 배터리 최적화에서 제외됐어요'
+                                        : '기기의 배터리 최적화 때문에 알림이 늦게 올 수 있어요',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: currentTheme.textLight,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (_batteryOptimizationIgnored)
+                              Icon(
+                                Icons.check_circle,
+                                color: currentTheme.primary,
+                                size: 22,
+                              )
+                            else
+                              const Icon(
+                                Icons.chevron_right,
+                                color: Colors.grey,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     Text(
                       '데이터 관리',
