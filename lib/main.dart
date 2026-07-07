@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,19 +10,26 @@ import 'screens/home_screen.dart';
 import 'utils/notification_service.dart';
 import 'utils/theme_provider.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
-  Hive.registerAdapter(HabitAdapter());
-  await Hive.openBox<Habit>('habits');
-  await Hive.openBox('settings');
-  await NotificationService().init();
-  await _requestPermissions();
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-      child: const MyApp(),
-    ),
+void main() {
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      await Hive.initFlutter();
+      Hive.registerAdapter(HabitAdapter());
+      await Hive.openBox<Habit>('habits');
+      await Hive.openBox('settings');
+      await NotificationService().init();
+      await _requestPermissions();
+      runApp(
+        ChangeNotifierProvider(
+          create: (_) => ThemeProvider(),
+          child: const MyApp(),
+        ),
+      );
+    },
+    // 오프라인 등으로 google_fonts가 폰트 다운로드에 실패해도
+    // 이 예외가 앱 전체를 죽이지 않고 시스템 기본 폰트로 넘어가게 한다.
+    (error, stack) => debugPrint('Uncaught error: $error'),
   );
 }
 
