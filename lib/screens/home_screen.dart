@@ -214,7 +214,9 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.background,
-      body: SafeArea(
+      body: ThemeBackground(
+        theme: theme,
+        child: SafeArea(
         child: ValueListenableBuilder(
           valueListenable: box.listenable(),
           builder: (context, Box<Habit> box, _) {
@@ -304,7 +306,7 @@ class HomeScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Colors.white.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Column(
@@ -547,6 +549,7 @@ class HomeScreen extends StatelessWidget {
               ],
             );
           },
+        ),
         ),
       ),
       floatingActionButton: FloatingActionButton(

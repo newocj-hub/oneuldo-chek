@@ -7,6 +7,7 @@ class AppThemeData {
   final Color background;
   final Color textDark;
   final Color textLight;
+  final String? backgroundImage;
 
   const AppThemeData({
     required this.name,
@@ -15,7 +16,35 @@ class AppThemeData {
     required this.background,
     required this.textDark,
     required this.textLight,
+    this.backgroundImage,
   });
+}
+
+/// Scaffold body 배경을 감싸는 위젯.
+/// 테마에 [AppThemeData.backgroundImage]가 지정돼 있으면 이미지를,
+/// 없으면 [AppThemeData.background] 단색을 사용한다.
+class ThemeBackground extends StatelessWidget {
+  final AppThemeData theme;
+  final Widget child;
+
+  const ThemeBackground({super.key, required this.theme, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final imagePath = theme.backgroundImage;
+    if (imagePath == null) return child;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.background,
+        image: DecorationImage(
+          image: AssetImage(imagePath),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: child,
+    );
+  }
 }
 
 class AppThemes {
@@ -59,6 +88,15 @@ class AppThemes {
       background: Color(0xFFFDFAF5),
       textDark: Color(0xFF2C2010),
       textLight: Color(0xFF4A3B1F),
+    ),
+    AppThemeData(
+      name: '파스텔 스카이',
+      primary: Color(0xFF6FA8DC),
+      light: Color(0xFFE4F1FB),
+      background: Color(0xFFF7FBFF),
+      textDark: Color(0xFF1F3A4D),
+      textLight: Color(0xFF3E6E8E),
+      backgroundImage: 'assets/images/theme_bg_cloud.png',
     ),
   ];
 }

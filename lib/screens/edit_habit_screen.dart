@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/habit.dart';
+import '../utils/app_theme.dart';
 import '../utils/notification_service.dart';
 import '../utils/theme_provider.dart';
 
@@ -171,7 +172,9 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
 
     return Scaffold(
       backgroundColor: theme.background,
-      body: SafeArea(
+      body: ThemeBackground(
+        theme: theme,
+        child: SafeArea(
         child: Column(
           children: [
             Padding(
@@ -478,6 +481,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import '../models/habit.dart';
+import '../utils/app_theme.dart';
 import '../utils/theme_provider.dart';
 
 class StatsScreen extends StatefulWidget {
@@ -49,7 +50,9 @@ class _StatsScreenState extends State<StatsScreen> {
 
     return Scaffold(
       backgroundColor: theme.background,
-      body: SafeArea(
+      body: ThemeBackground(
+        theme: theme,
+        child: SafeArea(
         child: ValueListenableBuilder(
           valueListenable: box.listenable(),
           builder: (context, Box<Habit> box, _) {
@@ -347,6 +350,7 @@ class _StatsScreenState extends State<StatsScreen> {
               ],
             );
           },
+        ),
         ),
       ),
     );

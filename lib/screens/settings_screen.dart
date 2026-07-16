@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/habit.dart';
 import '../utils/app_theme.dart';
 import '../utils/theme_provider.dart';
+import 'tutorial_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -51,7 +52,9 @@ class _SettingsScreenState extends State<SettingsScreen>
 
     return Scaffold(
       backgroundColor: currentTheme.background,
-      body: SafeArea(
+      body: ThemeBackground(
+        theme: currentTheme,
+        child: SafeArea(
         child: Column(
           children: [
             Padding(
@@ -286,6 +289,58 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: () => _replayTutorial(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: currentTheme.light,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.replay_rounded,
+                                color: currentTheme.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '튜토리얼 다시 보기',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: currentTheme.textDark,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '처음 시작 튜토리얼을 다시 볼 수 있어요',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: currentTheme.textLight,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right, color: Colors.grey),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     Text(
                       '앱 정보',
@@ -349,7 +404,16 @@ class _SettingsScreenState extends State<SettingsScreen>
             ),
           ],
         ),
+        ),
       ),
+    );
+  }
+
+  void _replayTutorial(BuildContext context) {
+    Hive.box('settings').put('tutorial_completed', false);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const TutorialScreen()),
     );
   }
 

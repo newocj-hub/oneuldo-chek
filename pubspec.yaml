@@ -2,7 +2,7 @@ name: oneuldo_chek
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+4
+version: 1.0.0+5
 
 environment:
   sdk: ^3.11.5
@@ -36,6 +36,7 @@ flutter:
   assets:
     - assets/images/piggy_bank2.png
     - assets/images/app_icon.png
+    - assets/images/theme_bg_cloud.png
 
 flutter_launcher_icons:
   android: true

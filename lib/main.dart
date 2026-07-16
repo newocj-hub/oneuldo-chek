@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'models/habit.dart';
 import 'screens/home_screen.dart';
+import 'screens/tutorial_screen.dart';
 import 'utils/notification_service.dart';
 import 'utils/theme_provider.dart';
 
@@ -17,13 +18,15 @@ void main() {
       await Hive.initFlutter();
       Hive.registerAdapter(HabitAdapter());
       await Hive.openBox<Habit>('habits');
-      await Hive.openBox('settings');
+      final settingsBox = await Hive.openBox('settings');
       await NotificationService().init();
       await _requestPermissions();
+      final tutorialCompleted =
+          settingsBox.get('tutorial_completed', defaultValue: false) as bool;
       runApp(
         ChangeNotifierProvider(
           create: (_) => ThemeProvider(),
-          child: const MyApp(),
+          child: MyApp(showTutorial: !tutorialCompleted),
         ),
       );
     },
@@ -38,7 +41,9 @@ Future<void> _requestPermissions() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool showTutorial;
+
+  const MyApp({super.key, required this.showTutorial});
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +59,7 @@ class MyApp extends StatelessWidget {
         textTheme: GoogleFonts.notoSansKrTextTheme(),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: showTutorial ? const TutorialScreen() : const HomeScreen(),
     );
   }
 }

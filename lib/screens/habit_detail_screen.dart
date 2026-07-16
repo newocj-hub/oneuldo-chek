@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/habit.dart';
+import '../utils/app_theme.dart';
 import '../utils/theme_provider.dart';
 
 class HabitDetailScreen extends StatelessWidget {
@@ -39,7 +40,9 @@ class HabitDetailScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.background,
-      body: SafeArea(
+      body: ThemeBackground(
+        theme: theme,
+        child: SafeArea(
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
@@ -321,6 +324,7 @@ class HabitDetailScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
